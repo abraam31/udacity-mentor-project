@@ -11,17 +11,20 @@ class InputData(BaseModel):
 app = FastAPI()
 
 # Initialize Spark session
-spark = SparkSession.builder.appName("FraudDetectionAPI").getOrCreate()
-
+spark = SparkSession.builder \
+    .appName("FraudDetectionAPI") \
+    .config("spark.hadoop.fs.s3a.endpoint", "s3.amazonaws.com") \
+    .getOrCreate()
+    
 model = None
 
 @app.on_event('startup')
 async def load_model():
     global model
     #TODO: Update to use the appopriate Cloud Storage location
-    model_path = 'model/fraud_detection_model_latest' 
+    model_path = 's3a://uda-abraam-model/model'
     #TODO: Add an intermediate storage location
-
+    intermediate_storage_path = 's3a://uda-spark-bucket/intermediate-results/'
     # Load the PySpark model
     model = PipelineModel.load(model_path)
 

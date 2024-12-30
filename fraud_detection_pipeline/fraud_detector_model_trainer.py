@@ -15,7 +15,7 @@ from pyspark.ml import Pipeline
 from pyspark.sql.types import DoubleType
 
 ## @params: [JOB_NAME]
-args = getResolvedOptions(sys.argv, ['JOB_NAME'])
+args = getResolvedOptions(sys.argv, ['JOB_NAME', 'SOURCE_PATH'])
 
 sc = SparkContext()
 glueContext = GlueContext(sc)
@@ -60,6 +60,7 @@ def MyTransform(dynamic_frame):
         pipeline = Pipeline(stages=[assembler, scaler, finalAssembler, indexer, rf])
         # Fit the model
         model = pipeline.fit(df)
+        model_path = 's3://uda-abraam-model/model'
         model.write().overwrite().save(model_path)
         logger.info("Model trained and saved to S3")
         
@@ -71,7 +72,7 @@ def MyTransform(dynamic_frame):
         logger.warn(e)
 
 # Load your data from S3
-source_path = 's3://uda-abraam-data/dataset/creditcard.csv' 
+source_path = args.get('SOURCE_PATH', 's3://uda-abraam-data/dataset/creditcard.csv')
 dynamic_frame = glueContext.create_dynamic_frame.from_options( connection_type="s3", connection_options={"paths": [source_path]}, format="csv", format_options={"withHeader": True} ) 
 # Run the transformation 
 transformed_dynamic_frame = MyTransform(dynamic_frame)
